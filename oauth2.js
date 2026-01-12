@@ -2,12 +2,28 @@ import "dotenv/config";
 import { FlowAuthClient, OAuth2Scope, OAuth2ResponseType, OIDCUtils } from "flowauth-oauth2-client";
 import { createInterface } from "readline";
 
+/**
+ * Get OAuth2 Client Info from environment variables
+ * @returns {{clientId: string, clientSecret: string}}
+ */
+function getOAuth2CLientInfo() {
+  const clientId = process.env.FLOWAUTH_CLIENT_ID;
+  const clientSecret = process.env.FLOWAUTH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing variables FLOWAUTH_CLIENT_ID or FLOWAUTH_CLIENT_SECRET");
+  }
+  return {
+    clientId,
+    clientSecret,
+  };
+}
+
 // 설정 상수
 const CONFIG = {
   server: "https://authserver.viento.me",
   redirectUri: "https://auth.viento.me/callback",
-  clientId: process.env.FLOWAUTH_CLIENT_ID ?? "",
-  clientSecret: process.env.FLOWAUTH_CLIENT_SECRET ?? "",
+  clientId: null,
+  clientSecret: null,
   scopes: [OAuth2Scope.OPENID, OAuth2Scope.PROFILE, OAuth2Scope.EMAIL],
 };
 
@@ -272,7 +288,7 @@ async function customFlow() {
 // 메인 메뉴 함수
 async function showMenu() {
   console.log("\n" + "=".repeat(60));
-  console.log("FlowAuth OAuth2 Client SDK - 암호화 지원 강화 데모");
+  console.log("FlowAuth OAuth2 Client SDK Demo");
   console.log("=".repeat(60));
   console.log("1. 기본 OAuth2 Flow (자동 설정)");
   console.log("2. 보안 강화 Flow (PKCE + 자동 OIDC)");
@@ -312,18 +328,9 @@ async function showMenu() {
 
 // 프로그램 실행
 async function main() {
-  console.log("[SDK] 암호화 지원 강화된 SDK의 주요 개선사항:");
-  console.log("  - RSA (RS256) 및 ECDSA (ES256) 알고리즘 완전 지원");
-  console.log("  - 자동 알고리즘 감지 및 적절한 검증 수행");
-  console.log("  - JWKS 기반 강화된 서명 검증");
-  console.log("  - 하나의 createAuthorizeUrl()로 모든 플로우 지원");
-  console.log("  - 스코프 기반 자동 responseType 결정");
-  console.log("  - OIDC 자동 감지 및 nonce 자동 생성\n");
-
-  console.log("[CRYPTO] 지원되는 암호화 알고리즘:");
-  console.log("  - RSA-SHA256 (RS256): 2048비트 RSA 키");
-  console.log("  - ECDSA-SHA256 (ES256): P-256 곡선");
-  console.log("  - 자동 감지: 서버 설정에 따라 자동으로 적절한 검증 수행\n");
+  const clientInfo = getOAuth2CLientInfo();
+  CONFIG.clientId = clientInfo.clientId;
+  CONFIG.clientSecret = clientInfo.clientSecret;
 
   let continueMenu = true;
   while (continueMenu) {
