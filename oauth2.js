@@ -1,3 +1,9 @@
+/**
+ * FlowAuth(https://auth.viento.me) 플랫폼의 OAuth2/OIDC 통합을 위한 클라이언트 SDK
+ * 활용 방법과 예시에 대한 코드를 남깁니다.
+ * OAuth2 플로우 제어와 Authorization Code Grant, 토큰 리프래시 등의 모든 코드 구현 예시는 아래를 참고하세요.
+ */
+
 import "dotenv/config";
 import { FlowAuthClient, OAuth2Scope, OAuth2ResponseType, OIDCUtils } from "flowauth-oauth2-client";
 import { createInterface } from "readline";
