@@ -13,4 +13,14 @@ import { PalCrawl } from "pal-crawl";
 const palCrawl = new PalCrawl();
 const table = await palCrawl.get();
 
-console.log(table);
+console.log("[ 국회 진행중 입법예고 목록 ]");
+console.log("=====");
+table.forEach((data) => {
+  console.log(`의안번호: ${data.num}`);
+  console.log(`법안명: ${data.subject}`);
+  console.log(`제안자 구분: ${data.proposerCategory}`);
+  console.log(`소관위원회: ${data.committee}`);
+  console.log(`의견수: ${data.numComments}`);
+  console.log(`링크: ${data.link}`);
+  console.log("=====");
+});
