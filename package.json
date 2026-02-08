@@ -10,9 +10,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "buffer-analysis-engine": "^0.6.0",
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "flowauth-oauth2-client": "^4.3.0",
     "melona": "^2.3.0",
+    "multer": "^2.0.2",
     "pal-crawl": "^1.0.7"
   }
 }
