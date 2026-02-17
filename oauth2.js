@@ -7,6 +7,8 @@
 import "dotenv/config";
 import { FlowAuthClient, OAuth2Scope, OAuth2ResponseType, OIDCUtils } from "flowauth-oauth2-client";
 import { createInterface } from "readline";
+import http from "http";
+import url from "url";
 
 /**
  * Get OAuth2 Client Info from environment variables
@@ -27,7 +29,7 @@ function getOAuth2CLientInfo() {
 // 설정 상수
 const CONFIG = {
   server: "https://authserver.viento.me",
-  redirectUri: "https://auth.viento.me/callback",
+  redirectUri: "http://localhost:3000/callback",
   clientId: null,
   clientSecret: null,
   scopes: [OAuth2Scope.OPENID, OAuth2Scope.PROFILE, OAuth2Scope.EMAIL],
@@ -54,6 +56,48 @@ function getUserInput(prompt) {
     rl.question(prompt, (answer) => {
       rl.close();
       resolve(answer);
+    });
+  });
+}
+
+// 로컬 서버를 통해 Authorization Code 수신
+function listenForAuthCode() {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const parsedUrl = url.parse(req.url, true);
+
+      if (parsedUrl.pathname === "/callback") {
+        const code = parsedUrl.query.code;
+        const error = parsedUrl.query.error;
+
+        if (code) {
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end("<h1>인증 성공!</h1><p>브라우저를 닫고 터미널을 확인하세요.</p><script>window.close();</script>");
+          server.close();
+          resolve(code);
+        } else if (error) {
+          res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+          res.end(`<h1>인증 오류</h1><p>${error}</p>`);
+          server.close();
+          reject(new Error(`Authentication Error: ${error}`));
+        } else {
+          res.writeHead(400);
+          res.end("No code found");
+        }
+      } else {
+        res.writeHead(404);
+        res.end("Not Found");
+      }
+    });
+
+    server.listen(3000, () => {
+      console.log("\n[SERVER] 로컬 서버가 http://localhost:3000 에서 대기 중입니다...");
+      console.log("[ACTION] 위 인증 URL을 브라우저에서 열어 인증을 진행하세요.");
+    });
+
+    server.on("error", (err) => {
+      server.close();
+      reject(err);
     });
   });
 }
@@ -106,7 +150,7 @@ async function cryptoValidationTest() {
     console.log("  - RSA/ECDSA 자동 감지 활성화: OK");
     console.log("  - Nonce 생성:", nonce ? "OK" : "SKIP");
 
-    const code = await getUserInput("Authorization Code를 입력하세요 (암호화 검증 테스트): ");
+    const code = await listenForAuthCode(); // HTTP 서버 사용
     await handleTokenExchange(client, code, codeVerifier, nonce);
   } catch (error) {
     console.error("[ERROR] 암호화 검증 테스트 오류:", error.message);
@@ -229,7 +273,7 @@ async function basicOAuth2Flow() {
     console.log("[URL] 인증 URL:", authUrl);
     console.log("[INFO] OIDC 스코프가 포함되어 자동으로 'code id_token' 타입으로 설정됩니다.");
 
-    const code = await getUserInput("Authorization Code를 입력하세요: ");
+    const code = await listenForAuthCode(); // HTTP 서버 사용
     await handleTokenExchange(client, code);
   } catch (error) {
     console.error("[ERROR] 기본 OAuth2 플로우 오류:", error.message);
@@ -251,7 +295,7 @@ async function secureOAuth2FlowWithPKCE() {
     console.log("  - PKCE 활성화: OK");
     console.log("  - Nonce (OIDC):", nonce ? "OK" : "SKIP");
 
-    const code = await getUserInput("Authorization Code를 입력하세요: ");
+    const code = await listenForAuthCode(); // HTTP 서버 사용
     await handleTokenExchange(client, code, codeVerifier, nonce);
   } catch (error) {
     console.error("[ERROR] 보안 OAuth2 플로우 오류:", error.message);
@@ -284,7 +328,7 @@ async function customFlow() {
     console.log("  - Nonce:", nonce);
     console.log("  - Response Type: Hybrid Flow (code + id_token)");
 
-    const code = await getUserInput("Authorization Code를 입력하세요: ");
+    const code = await listenForAuthCode(); // HTTP 서버 사용
     await handleTokenExchange(client, code, pkce.codeVerifier, nonce);
   } catch (error) {
     console.error("[ERROR] 커스텀 플로우 오류:", error.message);
