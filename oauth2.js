@@ -9,6 +9,8 @@ import { FlowAuthClient, OAuth2Scope, OAuth2ResponseType, OIDCUtils } from "flow
 import { createInterface } from "readline";
 import http from "http";
 import url from "url";
+import fs from "fs";
+import path from "path";
 
 /**
  * Get OAuth2 Client Info from environment variables
@@ -72,7 +74,15 @@ function listenForAuthCode() {
 
         if (code) {
           res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-          res.end("<h1>인증 성공!</h1><p>브라우저를 닫고 터미널을 확인하세요.</p><script>window.close();</script>");
+
+          try {
+            const htmlPath = path.join(process.cwd(), "auth_success.html");
+            const html = fs.readFileSync(htmlPath, "utf8");
+            res.end(html);
+          } catch (err) {
+            res.end("<h1>인증 성공!</h1><p>브라우저를 닫고 터미널을 확인하세요.</p><script>window.close();</script>");
+          }
+
           server.close();
           resolve(code);
         } else if (error) {
